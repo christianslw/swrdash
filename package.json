@@ -1,0 +1,12 @@
+{
+  "name": "swr-senderinfrastruktur-prototyp",
+  "version": "0.3.0",
+  "private": true,
+  "type": "module",
+  "description": "Klickbarer Prototyp für das Unified Enterprise Portal der SWR-Senderinfrastruktur",
+  "scripts": {
+    "start": "node server.mjs",
+    "data": "node tools/build-demo-data.mjs",
+    "check": "node tests/data-check.mjs"
+  }
+}

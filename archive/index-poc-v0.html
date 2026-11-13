@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="de" data-carbon-theme="white">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SWR // Infrastruktur-Portal (PoC)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    /* IBM Carbon Design System Token Simulation (White & OLED g100) */
+    :root[data-carbon-theme="white"] {
+      --cds-background: #ffffff;
+      --cds-layer-01: #f4f4f4;
+      --cds-layer-02: #ffffff;
+      --cds-text-primary: #161616;
+      --cds-text-secondary: #525252;
+      --cds-text-helper: #6f6f6f;
+      --cds-border-subtle: #e0e0e0;
+      --cds-border-strong: #8d8d8d;
+      --cds-interactive: #0f62fe;
+      --cds-interactive-hover: #0353e9;
+      --cds-field: #f4f4f4;
+      --cds-support-error: #da1e28;
+      --cds-support-success: #24a148;
+      --cds-support-warning: #f1c21b;
+      --cds-header-bg: #161616;
+      --cds-header-text: #f4f4f4;
+      --cds-tag-bg: #e0e0e0;
+      --cds-tag-color: #161616;
+    }
+
+    :root[data-carbon-theme="oled"] {
+      --cds-background: #000000;
+      --cds-layer-01: #121212;
+      --cds-layer-02: #1c1c1c;
+      --cds-text-primary: #f4f4f4;
+      --cds-text-secondary: #c6c6c6;
+      --cds-text-helper: #8d8d8d;
+      --cds-border-subtle: #262626;
+      --cds-border-strong: #525252;
+      --cds-interactive: #0f62fe;
+      --cds-interactive-hover: #0353e9;
+      --cds-field: #121212;
+      --cds-support-error: #fa4d56;
+      --cds-support-success: #42be65;
+      --cds-support-warning: #f1c21b;
+      --cds-header-bg: #000000;
+      --cds-header-text: #ffffff;
+      --cds-tag-bg: #262626;
+      --cds-tag-color: #f4f4f4;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'IBM Plex Sans', -apple-system, sans-serif;
+      background-color: var(--cds-background);
+      color: var(--cds-text-primary);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    code, pre, .mono { font-family: 'IBM Plex Mono', monospace; }
+
+    /* Top Shell Header */
+    header.carbon-header {
+      height: 48px;
+      background-color: var(--cds-header-bg);
+      color: var(--cds-header-text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--cds-border-subtle);
+      flex-shrink: 0;
+      z-index: 1000;
+    }
+    .header-left { display: flex; align-items: center; gap: 24px; }
+    .brand-title { font-size: 14px; font-weight: 400; letter-spacing: 0.1px; }
+    .brand-title strong { font-weight: 600; }
+    .global-search-container { display: flex; align-items: center; position: relative; }
+    .global-search-container input {
+      background: var(--cds-layer-01);
+      border: 1px solid var(--cds-border-subtle);
+      color: var(--cds-text-primary);
+      padding: 6px 12px;
+      font-size: 13px;
+      width: 320px;
+      outline: none;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .global-search-container input:focus { border-color: var(--cds-interactive); }
+    .search-results-dropdown {
+      position: absolute;
+      top: 36px;
+      left: 0;
+      width: 100%;
+      background: var(--cds-layer-02);
+      border: 1px solid var(--cds-border-subtle);
+      display: none;
+      flex-direction: column;
+      z-index: 2000;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    .search-results-dropdown.active { display: flex; }
+    .search-result-item {
+      padding: 8px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--cds-border-subtle);
+    }
+    .search-result-item:hover { background: var(--cds-layer-01); }
+
+    .header-right { display: flex; align-items: center; gap: 16px; font-size: 13px; }
+    .active-site-indicator {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 3px 8px;
+      background: var(--cds-tag-bg);
+      color: var(--cds-tag-color);
+      font-family: 'IBM Plex Mono', monospace;
+      font-size: 12px;
+      border: 1px solid var(--cds-border-subtle);
+    }
+    .active-site-indicator button {
+      background: none;
+      border: none;
+      color: inherit;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    /* Layout Frame */
+    .app-frame { display: flex; flex: 1; height: calc(100vh - 48px); overflow: hidden; }
+
+    /* Side Nav */
+    nav.carbon-sidenav {
+      width: 250px;
+      background: var(--cds-layer-01);
+      border-right: 1px solid var(--cds-border-subtle);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+    }
+    .nav-item {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--cds-text-secondary);
+      cursor: pointer;
+      border-left: 4px solid transparent;
+      user-select: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .nav-item:hover { background: var(--cds-layer-02); color: var(--cds-text-primary); }
+    .nav-item.active {
+      background: var(--cds-layer-02);
+      color: var(--cds-text-primary);
+      border-left-color: var(--cds-interactive);
+      font-weight: 500;
+    }
+    .badge-count {
+      background: var(--cds-tag-bg);
+      font-size: 11px;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-family: 'IBM Plex Mono', monospace;
+    }
+
+    /* Main Workspace */
+    main.workspace { flex: 1; overflow-y: auto; background: var(--cds-background); }
+    .module-view { display: none; padding: 24px; min-height: 100%; }
+    .module-view.active { display: block; }
+
+    /* Generic Carbon Components */
+    .view-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--cds-border-subtle);
+    }
+    .view-title h2 { font-size: 24px; font-weight: 300; margin-bottom: 4px; }
+    .view-title p { font-size: 13px; color: var(--cds-text-helper); }
+    .btn-group { display: flex; gap: 8px; }
+
+    button.cds-btn {
+      padding: 10px 16px;
+      font-size: 13px;
+      font-family: 'IBM Plex Sans', sans-serif;
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    button.cds-btn-primary { background: var(--cds-interactive); color: #fff; }
+    button.cds-btn-primary:hover { background: var(--cds-interactive-hover); }
+    button.cds-btn-secondary { background: var(--cds-layer-01); color: var(--cds-text-primary); border: 1px solid var(--cds-border-strong); }
+    button.cds-btn-secondary:hover { background: var(--cds-layer-02); }
+
+    .cds-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+      margin-top: 12px;
+      text-align: left;
+    }
+    .cds-table th {
+      background: var(--cds-layer-01);
+      padding: 10px 12px;
+      font-weight: 600;
+      border-bottom: 1px solid var(--cds-border-strong);
+      color: var(--cds-text-secondary);
+    }
+    .cds-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--cds-border-subtle);
+      vertical-align: middle;
+    }
+    .cds-table tr:hover td { background: var(--cds-layer-01); }
+
+    .tag {
+      display: inline-block;
+      padding: 2px 6px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      border: 1px solid var(--cds-border-subtle);
+    }
+    .tag-success { background: rgba(36, 161, 72, 0.15); color: var(--cds-support-success); border-color: var(--cds-support-success); }
+    .tag-warning { background: rgba(241, 194, 27, 0.15); color: var(--cds-support-warning); border-color: var(--cds-support-warning); }
+    .tag-error { background: rgba(218, 30, 40, 0.15); color: var(--cds-support-error); border-color: var(--cds-support-error); }
+
+    /* Module 1: Dashboard Cards */
+    .dash-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 20px; }
+    .card { background: var(--cds-layer-01); border: 1px solid var(--cds-border-subtle); padding: 16px; }
+    .card-title { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--cds-text-secondary); }
+    .hotlinks-grid { display: flex; gap: 12px; margin-bottom: 20px; }
+    .hotlink-box {
+      flex: 1;
+      padding: 14px;
+      background: var(--cds-layer-02);
+      border: 1px solid var(--cds-border-subtle);
+      text-decoration: none;
+      color: var(--cds-text-primary);
+      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .hotlink-box:hover { border-color: var(--cds-interactive); }
+    .hotlink-box span.mono { font-size: 11px; color: var(--cds-text-helper); }
+
+    /* Module 3: Bildertool Dropzone */
+    .dropzone-box {
+      border: 2px dashed var(--cds-border-strong);
+      background: var(--cds-layer-01);
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      margin-bottom: 20px;
+    }
+    .dropzone-box:hover { border-color: var(--cds-interactive); background: var(--cds-layer-02); }
+
+    /* Module 4: Protokolle Wizard */
+    .proto-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group label { font-size: 12px; color: var(--cds-text-secondary); font-weight: 500; }
+    .form-group input, .form-group select {
+      background: var(--cds-layer-01);
+      border: 1px solid var(--cds-border-subtle);
+      color: var(--cds-text-primary);
+      padding: 8px 10px;
+      font-size: 13px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Shell -->
+  <header class="carbon-header">
+    <div class="header-left">
+      <div class="brand-title"><strong>SWR</strong> // Senderinfrastruktur</div>
+      <div class="global-search-container">
+        <input type="text" id="globalSiteSearch" placeholder="Standort, Nr. (z.B. 8400) oder Kürzel..." autocomplete="off">
+        <div class="search-results-dropdown" id="searchResultsDropdown"></div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div class="active-site-indicator" id="activeSiteIndicator" style="display: none;">
+        <span>Standort: <strong id="pinnedSiteLabel">8400</strong></span>
+        <button onclick="clearPinnedSite()" title="Filter aufheben">×</button>
+      </div>
+      <div>
+        <button class="cds-btn cds-btn-secondary" style="padding: 4px 10px; font-size: 12px;" onclick="toggleCarbonTheme()">Theme: <span id="themeLabel">White</span></button>
+      </div>
+      <div style="color: var(--cds-text-helper); font-size: 12px;" class="mono">EFK: C. Salwa</div>
+    </div>
+  </header>
+
+  <!-- App Body Frame -->
+  <div class="app-frame">
+    <!-- Side Nav -->
+    <nav class="carbon-sidenav">
+      <div class="nav-item active" onclick="switchTab('map')">
+        <span>Standort & Karte</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('wartung')">
+        <span>Wartungstool</span>
+        <span class="badge-count" id="wartungCountBadge">4</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('bilder')">
+        <span>Bildertool Pipeline</span>
+      </div>
+      <div class="nav-item" onclick="switchTab('protokolle')">
+        <span>Prüfprotokolle VDE</span>
+      </div>
+    </nav>
+
+    <!-- Content Workspace -->
+    <main class="workspace">
+      
+      <!-- TAB 1: STANDORT & KARTE -->
+      <section id="tab-map" class="module-view active">
+        <div class="view-header">
+          <div class="view-title">
+            <h2 id="viewSiteHeader">Standortübersicht: 8400 Geislingen / Oberböhringen</h2>
+            <p class="mono" id="viewSiteSub">DFMG / SWR • Koordinaten: 48.6189° N, 9.7994° E • NSHV-Abgang A3</p>
+          </div>
+          <div class="btn-group">
+            <button class="cds-btn cds-btn-secondary" onclick="alert('Routing wird aufgerufen (OSRM/Navi)')">Routenplanung (42 min)</button>
+          </div>
+        </div>
+
+        <div class="hotlinks-grid">
+          <a href="#" class="hotlink-box" onclick="alert('Öffne SharePoint Standortordner'); return false;">
+            <strong>📁 SharePoint Standortordner</strong>
+            <span class="mono">Dokumente, Statiken, Fluchtpläne</span>
+          </a>
+          <a href="#" class="hotlink-box" onclick="alert('Öffne Betriebstagebuch'); return false;">
+            <strong>📖 Digitales Betriebstagebuch</strong>
+            <span class="mono">Einträge, Vorkommnisse, Schalthandlungen</span>
+          </a>
+          <div class="hotlink-box">
+            <strong>⚠️ DWD Wetter & Steigwarnung</strong>
+            <span style="color: var(--cds-support-warning); font-weight: 500;">Böen bis 55 km/h (Stufe Gelb)</span>
+          </div>
+        </div>
+
+        <div class="dash-grid">
+          <div class="card">
+            <div class="card-title">Interaktiver Lageplan & Geodaten</div>
+            <div style="height: 280px; background: var(--cds-layer-02); border: 1px solid var(--cds-border-subtle); display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;">
+              <span class="mono">[ Leaflet / GIS Karten-Layer ]</span>
+              <span style="font-size: 12px; color: var(--cds-text-helper);" id="gisCoords">Standort 8400 zentriert (48.6189° N, 9.7994° E)</span>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Objekt-Stammdaten</div>
+            <table class="cds-table">
+              <tr><td>Turmhöhe</td><td class="mono">110 m (Stahlgitter)</td></tr>
+              <tr><td>Blitzschutz</td><td class="mono">Klasse I (DIN EN 62305)</td></tr>
+              <tr><td>Niederspannung</td><td class="mono">TN-C-S / 400V 160A</td></tr>
+              <tr><td>Letzte DGUV V3</td><td class="mono">14.10.2025 (i.O.)</td></tr>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: WARTUNGSTOOL -->
+      <section id="tab-wartung" class="module-view">
+        <div class="view-header">
+          <div class="view-title">
+            <h2>Wartungsmanagement</h2>
+            <p>Fällige Prüfungen, Turnuswartungen und Bearbeiter-Zuweisung</p>
+          </div>
+          <div class="btn-group">
+            <button class="cds-btn cds-btn-secondary" onclick="filterMyTasks()">Nur meine Aufgaben</button>
+            <button class="cds-btn cds-btn-primary" onclick="alert('Neuer Wartungsauftrag angelegt')">+ Wartung anlegen</button>
+          </div>
+        </div>
+
+        <table class="cds-table" id="wartungTable">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Standort</th>
+              <th>Wartungsbezeichnung</th>
+              <th>Fälligkeit</th>
+              <th>Bearbeiter</th>
+              <th>Status</th>
+              <th>Aktion</th>
+            </tr>
+          </thead>
+          <tbody id="wartungTableBody"></tbody>
+        </table>
+      </section>
+
+      <!-- TAB 3: BILDERTOOL -->
+      <section id="tab-bilder" class="module-view">
+        <div class="view-header">
+          <div class="view-title">
+            <h2>Bildertool // KI-Pipeline & Vektoranalyse</h2>
+            <p>Upload von Baustellenfotos mit automatischer EXIF-Geolokalisierung, Schärfeberechnung und OCR</p>
+          </div>
+        </div>
+
+        <div class="dropzone-box" onclick="simulateImageUpload()">
+          <p style="font-size: 15px; font-weight: 500; margin-bottom: 4px;">Dateien hierher ziehen oder klicken zur Simulation</p>
+          <p style="font-size: 12px; color: var(--cds-text-helper);">Testbild: Vor-Ort-Foto NSHV Überspannungsableiter & Stromzähler</p>
+        </div>
+
+        <div class="card" id="imagePipelineResult" style="display: none;">
+          <div class="card-title">Pipeline-Analyseergebnis (Worker Response)</div>
+          <table class="cds-table">
+            <thead>
+              <tr>
+                <th>Vorschau</th>
+                <th>EXIF GPS / Match</th>
+                <th>Schärfeprüfung</th>
+                <th>Vektormodell Kategorisierung</th>
+                <th>OCR Zählerstand</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><div style="width: 50px; height: 50px; background: #262626; display: flex; align-items: center; justify-content: center; font-size: 10px;" class="mono">IMG_4821</div></td>
+                <td>
+                  <strong>8400 Oberböhringen</strong><br>
+                  <span class="mono" style="font-size: 11px;">Abstand: 12 Meter</span>
+                </td>
+                <td>
+                  <span class="tag tag-success">Scharf</span><br>
+                  <span class="mono" style="font-size: 11px;">Laplace: 442.8</span>
+                </td>
+                <td>
+                  <strong>NSHV / UVT</strong><br>
+                  <span style="font-size: 12px; color: var(--cds-text-secondary);">Überspannungsschutz Dehn Typ 1+2</span>
+                </td>
+                <td>
+                  <span class="mono" style="font-weight: 600;">048291.6 kWh</span>
+                </td>
+                <td><span class="tag tag-success">Komprimiert (72%)</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- TAB 4: PROTOKOLLE VDE -->
+      <section id="tab-protokolle" class="module-view">
+        <div class="view-header">
+          <div class="view-title">
+            <h2>Prüfprotokolle // VDE 0100-600 & 0105-100</h2>
+            <p>Ortsfeste elektrische Anlagen, Leiterprüfung und Antennentragwerk</p>
+          </div>
+          <div class="btn-group">
+            <button class="cds-btn cds-btn-secondary" onclick="alert('Importiere IZYTRONIQ / Fluke XML...')">Messdaten importieren</button>
+            <button class="cds-btn cds-btn-primary" onclick="alert('PDF generiert und im Standortordner abgelegt!')">Revisionssicheres PDF exportieren</button>
+          </div>
+        </div>
+
+        <div class="proto-grid">
+          <div class="form-group">
+            <label>Prüfart / Norm</label>
+            <select>
+              <option>DIN VDE 0105-100 (Wiederholungsprüfung Ortsfest)</option>
+              <option>DIN VDE 0100-600 (Erstprüfung Neuanlage)</option>
+              <option>DGUV V3 Leiter- und Steigschutzprüfung</option>
+              <option>Antennentragwerk & Erdungsnachweis</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Verantwortlicher Prüfer (EFK)</label>
+            <input type="text" value="Christian Salwa (EFK)" readonly>
+          </div>
+          <div class="form-group">
+            <label>Prüfobjekt / Verteiler</label>
+            <input type="text" value="NSHV-Hauptverteilung Sendertechnik">
+          </div>
+          <div class="form-group">
+            <label>Verwendetes Kalibriertes Messgerät</label>
+            <input type="text" value="GMC PROFITEST MF XTRA (SN: 1849204)">
+          </div>
+        </div>
+
+        <h3 style="font-size: 14px; margin-bottom: 8px; font-weight: 600;">Messwerte-Erfassung Stromkreise</h3>
+        <table class="cds-table">
+          <thead>
+            <tr>
+              <th>Stromkreis / Abgang</th>
+              <th>Charakteristik</th>
+              <th>R_ISO (MΩ)</th>
+              <th>Z_S (Ω)</th>
+              <th>RCD I_ΔN</th>
+              <th>RCD t_A (ms)</th>
+              <th>Sichtprüfung</th>
+              <th>Bewertung</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>F1: Sender FM 10kW (A3)</td>
+              <td>NH00 63A gG</td>
+              <td><input type="text" value="> 100" style="width: 60px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td><input type="text" value="0.22" style="width: 50px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td>-</td>
+              <td>-</td>
+              <td><span class="tag tag-success">i.O.</span></td>
+              <td><span class="tag tag-success">Bestanden</span></td>
+            </tr>
+            <tr>
+              <td>F2: USV Bypass Rack 1</td>
+              <td>B 16A</td>
+              <td><input type="text" value="> 100" style="width: 60px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td><input type="text" value="0.48" style="width: 50px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td>30 mA</td>
+              <td><input type="text" value="18.4" style="width: 50px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td><span class="tag tag-success">i.O.</span></td>
+              <td><span class="tag tag-success">Bestanden</span></td>
+            </tr>
+            <tr>
+              <td>F3: Außenbeleuchtung Mastfuß</td>
+              <td>B 10A</td>
+              <td><input type="text" value="1.8" style="width: 60px; background: transparent; border: 1px solid var(--cds-support-error); color: inherit;" class="mono"></td>
+              <td><input type="text" value="1.12" style="width: 50px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td>30 mA</td>
+              <td><input type="text" value="24.2" style="width: 50px; background: transparent; border: none; color: inherit;" class="mono"></td>
+              <td><span class="tag tag-warning">Feuchtigkeit</span></td>
+              <td><span class="tag tag-error">Mangel</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+    </main>
+  </div>
+
+  <script>
+    // Zentrale Standortdaten
+    const SITES = [
+      { id: '8400', kuerzel: 'OBB', name: 'Geislingen / Oberböhringen', lat: 48.6189, lon: 9.7994, type: 'DFMG / SWR' },
+      { id: '8800', kuerzel: 'ULM', name: 'Ulm Ermingen', lat: 48.3986, lon: 9.9012, type: 'DFMG' },
+      { id: '8700', kuerzel: 'STR', name: 'Stuttgart Frauenkopf', lat: 48.7654, lon: 9.2045, type: 'DFMG' },
+      { id: '8321', kuerzel: 'LGB', name: 'Langenburg', lat: 49.2531, lon: 9.8512, type: 'DFMG' },
+      { id: '8101', kuerzel: 'AAL', name: 'Aalen Braunenberg', lat: 48.8611, lon: 10.1342, type: 'SWR' }
+    ];
+
+    // Wartungs-Datensätze
+    let maintenanceTasks = [
+      { id: 'W-1042', siteId: '8400', name: 'DGUV V3 Wiederholungsprüfung NSHV', due: '2026-11-20', tech: 'C. Salwa', status: 'In Bearbeitung' },
+      { id: 'W-1043', siteId: '8400', name: 'Jahreswartung Notstromdiesel & USV', due: '2026-12-05', tech: 'Sven (VEFK)', status: 'Offen' },
+      { id: 'W-1044', siteId: '8800', name: 'Steigschutzläufer & PSAgA Befahrungsprüfung', due: '2026-11-25', tech: 'C. Salwa', status: 'Offen' },
+      { id: 'W-1045', siteId: '8700', name: 'RDI Klimaanlagen Filterwechsel', due: '2026-12-15', tech: 'Henning', status: 'Offen' }
+    ];
+
+    let pinnedSite = null;
+
+    // Initialisierung
+    window.addEventListener('DOMContentLoaded', () => {
+      renderWartungTable();
+      setupSiteSearch();
+    });
+
+    // Theme Switcher (White vs. OLED Black)
+    function toggleCarbonTheme() {
+      const root = document.documentElement;
+      const current = root.getAttribute('data-carbon-theme');
+      const target = current === 'white' ? 'oled' : 'white';
+      root.setAttribute('data-carbon-theme', target);
+      document.getElementById('themeLabel').innerText = target === 'white' ? 'White' : 'OLED Black';
+    }
+
+    // Navigation Tab Switching
+    function switchTab(tabId) {
+      document.querySelectorAll('.module-view').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(`tab-${tabId}`).classList.add('active');
+      event.currentTarget.classList.add('active');
+    }
+
+    // Wartungstool Rendering
+    function renderWartungTable(tasks = maintenanceTasks) {
+      const tbody = document.getElementById('wartungTableBody');
+      tbody.innerHTML = '';
+      
+      const filtered = pinnedSite ? tasks.filter(t => t.siteId === pinnedSite.id) : tasks;
+      document.getElementById('wartungCountBadge').innerText = filtered.length;
+
+      filtered.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="mono">${t.id}</td>
+          <td><strong>${t.siteId}</strong> <span style="font-size:12px; color:var(--cds-text-secondary);">${getSiteName(t.siteId)}</span></td>
+          <td>${t.name}</td>
+          <td class="mono">${t.due}</td>
+          <td>${t.tech}</td>
+          <td><span class="tag ${t.status === 'Offen' ? 'tag-warning' : 'tag-success'}">${t.status}</span></td>
+          <td><button class="cds-btn cds-btn-secondary" style="padding:4px 8px; font-size:11px;" onclick="alert('Öffne Wartungsdetails ${t.id}')">Bearbeiten</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function getSiteName(id) {
+      const s = SITES.find(x => x.id === id);
+      return s ? s.name : '';
+    }
+
+    // Filter "Nur meine Aufgaben"
+    function filterMyTasks() {
+      const my = maintenanceTasks.filter(t => t.tech.includes('C. Salwa'));
+      renderWartungTable(my);
+    }
+
+    // Globale Standortsuche
+    function setupSiteSearch() {
+      const input = document.getElementById('globalSiteSearch');
+      const dropdown = document.getElementById('searchResultsDropdown');
+
+      input.addEventListener('input', (e) => {
+        const q = e.target.value.toLowerCase().trim();
+        if (!q) {
+          dropdown.classList.remove('active');
+          return;
+        }
+        const matches = SITES.filter(s => 
+          s.id.includes(q) || s.kuerzel.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)
+        );
+
+        dropdown.innerHTML = '';
+        if (matches.length > 0) {
+          matches.forEach(m => {
+            const item = document.createElement('div');
+            item.className = 'search-result-item';
+            item.innerHTML = `<span><strong>${m.id}</strong> (${m.kuerzel}) - ${m.name}</span><span class="mono">${m.type}</span>`;
+            item.onclick = () => pinSite(m);
+            dropdown.appendChild(item);
+          });
+          dropdown.classList.add('active');
+        } else {
+          dropdown.classList.remove('active');
+        }
+      });
+    }
+
+    function pinSite(site) {
+      pinnedSite = site;
+      document.getElementById('globalSiteSearch').value = '';
+      document.getElementById('searchResultsDropdown').classList.remove('active');
+      document.getElementById('activeSiteIndicator').style.display = 'flex';
+      document.getElementById('pinnedSiteLabel').innerText = `${site.id} - ${site.kuerzel}`;
+      
+      // Update Standortübersicht
+      document.getElementById('viewSiteHeader').innerText = `Standortübersicht: ${site.id} ${site.name}`;
+      document.getElementById('viewSiteSub').innerText = `${site.type} • Koordinaten: ${site.lat}° N, ${site.lon}° E`;
+      document.getElementById('gisCoords').innerText = `Standort ${site.id} zentriert (${site.lat}° N, ${site.lon}° E)`;
+
+      renderWartungTable();
+    }
+
+    function clearPinnedSite() {
+      pinnedSite = null;
+      document.getElementById('activeSiteIndicator').style.display = 'none';
+      document.getElementById('viewSiteHeader').innerText = 'Alle Standorte';
+      document.getElementById('viewSiteSub').innerText = 'Wähle einen Standort über die Schnellsuche oder Karte';
+      renderWartungTable();
+    }
+
+    // Bildertool Simulation
+    function simulateImageUpload() {
+      const res = document.getElementById('imagePipelineResult');
+      res.style.display = 'block';
+    }
+  </script>
+</body>
+</html>
